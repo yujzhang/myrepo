@@ -1,0 +1,30 @@
+1. The technology used in openshift V2
+* selinux 
+* cgroup  (cpu,memory)
+* namespace pam (tmp)
+* pam_limits (nproc)
+* iptable
+* TC
+* quota
+
+2. openshift components and relationship
+Broker + mcollective client
+Node + mcollective daemon + cartridge
+Datastore
+Message Server
+DNS
+
+3. HTTPD in openshift
+Broker httpd
+Node httpd
+Gear httpd
+
+4. iptables usage in openshift
+openshift-iptables-port-proxy
+iptable functionality for scaling app
+
+5. How to utilize HA scaling app in business production
+What is scaling app and HA scaling app
+Configuration related to HA scaling app in /etc/openshift/broker.conf
+Disadvantage of HA scaling app in default openshift deployment
+activemq, mcollective, rubygem-openshift-origin-routing-activemq, rubygem-openshift-origin-routing-daemon, nginx, ssl cert alias
