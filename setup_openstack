@@ -1,0 +1,100 @@
+Two version: Openstack I: / Openstack J:
+
+（１）======================Openstack I:=======================
+1. Configure Repo
+(1)yum install -y http://rdo.fedorapeople.org/rdo-release.rpm (Please select IceHouse)
+(2)yum install -y http://mirrors.sohu.com/fedora-epel/6Server/x86_64/epel-release-6-8.noarch.rpm
+(3)OS
+(4)OS-OPTIONAL
+
+2. Controller
+(1)yum install -y openstack-packstack
+(2)yum update -y
+(3)reboot
+(4)packstack --allinone --provision-all-in-one-ovs-bridge=n --use-epel=y
+(5)Create ifcfg-br-ex
+DEVICE=br-ex
+DEVICETYPE=ovs
+TYPE=OVSBridge
+BOOTPROTO=static
+IPADDR=10.66.129.117 # Old eth0 IP since we want the network restart to not kill the connection, otherwise pick something outside your dhcp range
+NETMASK=255.255.254.0  # your netmask
+GATEWAY=10.66.129.254  # your gateway
+DNS1=10.66.127.17     # your nameserver
+ONBOOT=yes
+
+(6)Modify ifcfg-eth0
+DEVICE="eth0"
+HWADDR="52:54:00:2E:47:B4"
+ONBOOT="yes"
+TYPE=OVSPort
+DEVICETYPE=ovs
+OVS_BRIDGE=br-ex
+(7)/etc/neutron/plugin.ini
+network_vlan_ranges = physnet1
+bridge_mappings = physnet1:br-ex
+(8)Network restart
+(9)
+# . keystonerc_admin
+# neutron router-gateway-clear router1
+# neutron subnet-delete public_subnet
+
+(10)
+neutron subnet-create --name public_subnet --enable_dhcp=False --allocation-pool=start=10.66.128.83,end=10.66.128.96 --gateway=10.66.129.254 public 10.66.128.0/23
+
+(11)
+neutron router-gateway-set router1 public
+
+3. Computer
+(1)yum install -y openstack-packstack
+(2)yum update -y
+(3)reboot
+(4)using the same packstack.cfg
+CONFIG_COMPUTE_HOSTS=10.66.128.33 #(the second ip address)
+CONFIG_NOVA_COMPUTE_PRIVIF=eth0
+CONFIG_NOVA_NETWORK_PRIVIF=eth0
+(5)packstack --answer-file=packstack.cfg
+
+4.Check env on controller node
+#nova service-list 
+
+（２）=====================Openstack J:=======================
+1. Configure Repo
+(1)yum install -y http://rdo.fedorapeople.org/rdo-release.rpm (Please select IceHouse)
+(2)yum install -y http://mirrors.sohu.com/fedora-epel/7/x86_64/e/epel-release-7-2.noarch.rpm
+(3)OS
+(4)OS-OPTIONAL
+(5)OS-External
+2. Controller
+(1)yum install -y openstack-packstack
+(2)yum update -y
+(3)reboot
+(4)packstack --allinone --provision-all-in-one-ovs-bridge=n --use-epel=y --os-heat-install=y --os-heat-cfn-install=y
+(5)Create ifcfg-br-ex
+DEVICE=br-ex
+DEVICETYPE=ovs
+TYPE=OVSBridge
+BOOTPROTO=static
+IPADDR=10.66.129.117 # Old eth0 IP since we want the network restart to not kill the connection, otherwise pick something outside your dhcp range
+NETMASK=255.255.254.0  # your netmask
+GATEWAY=10.66.129.254  # your gateway
+DNS1=10.66.127.17     # your nameserver
+ONBOOT=yes
+
+(6)Modify ifcfg-eth0
+DEVICE="eth0"
+HWADDR="52:54:00:2E:47:B4"
+ONBOOT="yes"
+TYPE=OVSPort
+DEVICETYPE=ovs
+OVS_BRIDGE=br-ex
+(7)/etc/neutron/plugin.ini
+network_vlan_ranges = physnet1
+bridge_mappings = physnet1:br-ex
+(8)vim /etc/libvirt/qemu.conf
+user="nova"
+group="nova"
+(9)
+systemctl restart network.service
+systemctl restart libvirtd.service
+(10) Done
